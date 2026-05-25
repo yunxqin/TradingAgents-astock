@@ -38,14 +38,16 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-
-    /* Hide Streamlit chrome for clean video recording */
-    #MainMenu, header[data-testid="stHeader"],
-    footer, div[data-testid="stDecoration"],
-    div[data-testid="stToolbar"] { display: none !important; }
-    /* Ensure sidebar collapse/expand control is always visible */
-    button[data-testid="collapsedControl"] { display: flex !important; }
+    /* Hide minor Streamlit chrome without breaking sidebar toggle */
+    #MainMenu { display: none !important; }
+    footer { display: none !important; }
+    div[data-testid="stDecoration"] { display: none !important; }
+    /* Ensure collapsedControl expand button is always visible */
+    button[data-testid="collapsedControl"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
 
     html, body, [class*="css"] {
         font-family: 'Inter', -apple-system, sans-serif;

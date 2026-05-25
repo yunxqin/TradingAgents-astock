@@ -7,7 +7,7 @@ from typing import Any
 
 import streamlit as st
 
-from web.pdf_export import generate_pdf
+from web.html_export import generate_pdf_bytes
 
 
 def _strip_think(text: str) -> str:
@@ -77,7 +77,7 @@ def render_report(
 
     col_pdf, col_spacer = st.columns([1, 3])
     with col_pdf:
-        pdf_bytes = generate_pdf(final_state, ticker, trade_date, signal)
+        pdf_bytes = generate_pdf_bytes(final_state, ticker, trade_date, signal)
         st.download_button(
             "📥 下载 PDF 报告",
             data=pdf_bytes,
