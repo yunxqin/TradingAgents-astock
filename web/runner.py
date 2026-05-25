@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
+import sys
 import threading
+from pathlib import Path
 from typing import Any
 
 from web.progress import PIPELINE_STAGES, ProgressTracker
@@ -22,6 +24,9 @@ def _strip_think_tags(text: str) -> str:
     return re.sub(r"<think>.*?</think>\s*", "", text, flags=re.DOTALL).strip()
 
 
+_STAGE_NAMES: dict[str, str] = {s["id"]: s["name"] for s in PIPELINE_STAGES}
+
+
 def _detect_completed_stages(
     chunk: dict[str, Any],
     tracker: ProgressTracker,
@@ -32,30 +37,36 @@ def _detect_completed_stages(
         content = chunk.get(report_key, "")
         if content and tracker.stage_status(stage_id) != "done":
             tracker.mark_stage_done(stage_id, _strip_think_tags(str(content)))
+            print(f"  ✓ {_STAGE_NAMES[stage_id]} 完成", file=sys.stderr)
 
     dqs = chunk.get("data_quality_summary", "")
     if dqs and tracker.stage_status("quality_gate") != "done":
         tracker.mark_stage_done("quality_gate", str(dqs))
+        print(f"  ✓ {_STAGE_NAMES['quality_gate']} 完成", file=sys.stderr)
 
     debate = chunk.get("investment_debate_state")
     if debate and isinstance(debate, dict):
         judge = debate.get("judge_decision", "")
         if judge and tracker.stage_status("debate") != "done":
             tracker.mark_stage_done("debate", str(judge))
+            print(f"  ✓ {_STAGE_NAMES['debate']} 完成", file=sys.stderr)
 
     trader_plan = chunk.get("trader_investment_plan", "")
     if trader_plan and tracker.stage_status("trader") != "done":
         tracker.mark_stage_done("trader", _strip_think_tags(str(trader_plan)))
+        print(f"  ✓ {_STAGE_NAMES['trader']} 完成", file=sys.stderr)
 
     risk = chunk.get("risk_debate_state")
     if risk and isinstance(risk, dict):
         risk_judge = risk.get("judge_decision", "")
         if risk_judge and tracker.stage_status("risk") != "done":
             tracker.mark_stage_done("risk", str(risk_judge))
+            print(f"  ✓ {_STAGE_NAMES['risk']} 完成", file=sys.stderr)
 
     final = chunk.get("final_trade_decision", "")
     if final and tracker.stage_status("pm") != "done":
         tracker.mark_stage_done("pm", _strip_think_tags(str(final)))
+        print(f"  ✓ {_STAGE_NAMES['pm']} 完成", file=sys.stderr)
 
 
 def _infer_active_stage(tracker: ProgressTracker) -> None:
@@ -67,10 +78,23 @@ def _infer_active_stage(tracker: ProgressTracker) -> None:
             return
 
 
+def _log_dir(ticker: str) -> Path:
+    return Path.home() / ".tradingagents" / "logs" / ticker / "TradingAgentsStrategy_logs"
+
+
 def _run(ticker: str, trade_date: str, config: dict, tracker: ProgressTracker) -> None:
     """Execute the full pipeline in the current thread."""
     from cli.stats_handler import StatsCallbackHandler
     from tradingagents.graph.trading_graph import TradingAgentsGraph
+
+    log_dir = _log_dir(ticker)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    debug_path = log_dir / f"debug_{trade_date}.log"
+
+    print(f"\n{'='*50}")
+    print(f"分析启动: {ticker} {trade_date}")
+    print(f"Debug 日志: {debug_path}")
+    print(f"{'='*50}")
 
     stats = StatsCallbackHandler()
 
@@ -85,20 +109,38 @@ def _run(ticker: str, trade_date: str, config: dict, tracker: ProgressTracker) -
 
     last_chunk: dict[str, Any] = {}
 
-    for chunk in graph.graph.stream(init_state, **args):
-        last_chunk = chunk
-        _detect_completed_stages(chunk, tracker)
-        _infer_active_stage(tracker)
+    # Redirect stdout to debug log file — keeps terminal clean while
+    # preserving all LLM prompts/responses for later review.
+    old_stdout = sys.stdout
+    with open(debug_path, "w", encoding="utf-8") as debug_log:
+        sys.stdout = debug_log
+        try:
+            for chunk in graph.graph.stream(init_state, **args):
+                last_chunk = chunk
+                _detect_completed_stages(chunk, tracker)
+                _infer_active_stage(tracker)
 
-        s = stats.get_stats()
-        tracker.update_stats(s["llm_calls"], s["tool_calls"], s["tokens_in"], s["tokens_out"])
+                s = stats.get_stats()
+                tracker.update_stats(s["llm_calls"], s["tool_calls"], s["tokens_in"], s["tokens_out"])
+        finally:
+            sys.stdout = old_stdout
 
     signal = graph.process_signal(last_chunk.get("final_trade_decision", ""))
+
+    # Print stage summary to terminal from tracker state
+    completed = tracker.completed_stages
+    for stage in PIPELINE_STAGES:
+        sid = stage["id"]
+        if sid in completed:
+            print(f"  ✓ {stage['icon']} {stage['name']}")
 
     graph.ticker = ticker
     graph._log_state(trade_date, last_chunk)
 
     tracker.mark_complete(last_chunk, signal)
+    print(f"  信号: {signal}")
+    print(f"  LLM 调用: {tracker.llm_calls}  工具调用: {tracker.tool_calls}")
+    print(f"{'='*50}\n")
 
 
 def run_analysis_in_thread(

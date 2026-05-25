@@ -172,6 +172,7 @@ if start_req:
         config=_build_config(),
         tracker=tracker,
     )
+    st.toast(f"分析已启动: {start_req['ticker']} {start_req['trade_date']}", icon="🚀")
 
 
 # ── Main area state machine ─────────────────────────────────────────────────
