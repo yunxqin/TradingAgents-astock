@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from markdown_it import MarkdownIt
@@ -284,12 +285,26 @@ def _render_subsection(title: str, content: str) -> str:
 </div>"""
 
 
+def _pdf_cache_dir(ticker: str) -> Path:
+    return Path.home() / ".tradingagents" / "logs" / ticker / "TradingAgentsStrategy_logs"
+
+
 def generate_pdf_bytes(final_state: dict[str, Any], ticker: str, trade_date: str, signal: str) -> bytes:
-    """Generate a PDF report via WeasyPrint HTML→PDF conversion and return as bytes."""
+    """Generate a PDF report via WeasyPrint HTML→PDF conversion, cached to disk."""
+    cache_path = _pdf_cache_dir(ticker) / f"cache_pdf_{trade_date}.pdf"
+
+    # Hit disk cache — skip expensive WeasyPrint run
+    if cache_path.exists():
+        return cache_path.read_bytes()
+
     html_str = generate_html(final_state, ticker, trade_date, signal)
     from weasyprint import HTML
 
-    return HTML(string=html_str).write_pdf()
+    pdf_bytes = HTML(string=html_str).write_pdf()
+
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_bytes(pdf_bytes)
+    return pdf_bytes
 
 
 def generate_html(final_state: dict[str, Any], ticker: str, trade_date: str, signal: str) -> str:

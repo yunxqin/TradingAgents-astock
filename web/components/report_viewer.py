@@ -77,10 +77,14 @@ def render_report(
 
     col_pdf, col_spacer = st.columns([1, 3])
     with col_pdf:
-        pdf_bytes = generate_pdf_bytes(final_state, ticker, trade_date, signal)
+        # Cache PDF bytes in session_state — WeasyPrint is CPU-heavy (~1-3s),
+        # avoid regenerating on every Streamlit rerun.
+        pdf_key = f"pdf_{ticker}_{trade_date}"
+        if pdf_key not in st.session_state:
+            st.session_state[pdf_key] = generate_pdf_bytes(final_state, ticker, trade_date, signal)
         st.download_button(
             "📥 下载 PDF 报告",
-            data=pdf_bytes,
+            data=st.session_state[pdf_key],
             file_name=f"TradingAgents-Astock_{ticker}_{trade_date}.pdf",
             mime="application/pdf",
             use_container_width=True,

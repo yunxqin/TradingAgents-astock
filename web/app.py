@@ -135,9 +135,9 @@ st.markdown(
 
 def _build_config() -> dict:
     config = DEFAULT_CONFIG.copy()
-    config["llm_provider"] = st.session_state.get("llm_provider", "minimax")
-    config["deep_think_llm"] = st.session_state.get("deep_think_llm", "MiniMax-M2.7")
-    config["quick_think_llm"] = st.session_state.get("quick_think_llm", "MiniMax-M2.7-highspeed")
+    config["llm_provider"] = st.session_state.get("llm_provider", "deepseek")
+    config["deep_think_llm"] = st.session_state.get("deep_think_llm", "deepseek-v4-pro")
+    config["quick_think_llm"] = st.session_state.get("quick_think_llm", "deepseek-v4-flash")
     config["data_vendors"] = {
         "core_stock_apis": "a_stock",
         "technical_indicators": "a_stock",
@@ -182,7 +182,10 @@ viewing_history: str | None = st.session_state.get("viewing_history")
 # State 1: Viewing a historical analysis
 if viewing_history:
     try:
-        state = load_analysis(viewing_history)
+        cache_key = f"hist_{viewing_history}"
+        if cache_key not in st.session_state:
+            st.session_state[cache_key] = load_analysis(viewing_history)
+        state = st.session_state[cache_key]
         signal = extract_signal(state)
         ticker = Path(viewing_history).parent.parent.name
         trade_date = Path(viewing_history).stem.replace("full_states_log_", "")
