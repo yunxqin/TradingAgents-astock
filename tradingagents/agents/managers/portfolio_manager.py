@@ -71,7 +71,11 @@ def create_portfolio_manager(llm):
 
 ---
 
-Be decisive and ground every conclusion in specific evidence from the analysts.{get_language_instruction()}"""
+Be decisive and ground every conclusion in specific evidence from the analysts.{get_language_instruction()}
+
+FORMAT REQUIREMENT: Your response MUST contain a line with exactly:
+RATING: <Buy|Overweight|Hold|Underweight|Sell>
+This line must contain only the rating keyword — no bold, no extra text, no parenthesised notes."""
 
         final_trade_decision = invoke_structured_or_freetext(
             structured_llm,

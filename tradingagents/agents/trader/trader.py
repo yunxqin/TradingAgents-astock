@@ -62,7 +62,10 @@ def create_trader(llm):
                     f"{instrument_context}\n\n"
                     f"Proposed Investment Plan:\n{investment_plan}\n\n"
                     + (f"Additional A-Stock Analyst Context:\n{astock_context}\n\n" if astock_context else "")
-                    + "Leverage these insights to craft a precise transaction proposal."
+                    + "Leverage these insights to craft a precise transaction proposal.\n\n"
+                    + "FORMAT REQUIREMENT: Your response MUST contain a line with exactly:\n"
+                    + "ACTION: <Buy|Hold|Sell>\n"
+                    + "This line must contain only the action keyword — no bold, no extra text."
                     + get_language_instruction()
                 ),
             },

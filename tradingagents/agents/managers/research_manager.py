@@ -39,7 +39,11 @@ Commit to a clear stance whenever the debate's strongest arguments warrant one; 
 ---
 
 **Debate History:**
-{history}""" + get_language_instruction()
+{history}
+
+FORMAT REQUIREMENT: Your response MUST contain a line with exactly:
+RECOMMENDATION: <Buy|Overweight|Hold|Underweight|Sell>
+This line must contain only the rating keyword — no bold, no extra text, no parenthesised notes.""" + get_language_instruction()
 
         investment_plan = invoke_structured_or_freetext(
             structured_llm,
