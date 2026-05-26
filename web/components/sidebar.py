@@ -98,7 +98,7 @@ def render_sidebar() -> None:
                 A股多Agent投研系统
             </div>
             <div style="font-size:0.7rem; color:#555; margin-top:0.3rem;">
-                by <a href="https://github.com/simonlin1212" style="color:#ff5a1f; text-decoration:none;">simonlin1212</a>
+                by <a href="https://github.com/yunxqin" style="color:#ff5a1f; text-decoration:none;">yunxqin</a>
             </div>
         </div>
         """,
@@ -123,6 +123,15 @@ def render_sidebar() -> None:
 
     with st.expander("⚙️ 模型配置", expanded=False):
         _render_llm_config()
+
+        st.markdown("---")
+        debug = st.checkbox(
+            "🐛 Debug 模式（跳过 LLM）",
+            key="debug_mode",
+            help="使用预置分析数据，不调用任何 LLM，方便测试 UI 功能",
+        )
+        if debug:
+            st.caption("⚠️ 数据为预置样例，非真实分析结果")
 
     tracker = st.session_state.get("tracker")
     is_busy = tracker is not None and tracker.is_running

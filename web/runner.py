@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -164,3 +166,106 @@ def run_analysis_in_thread(
     t = threading.Thread(target=_target, daemon=True)
     t.start()
     return t
+
+
+def run_debug_analysis_in_thread(
+    ticker: str,
+    trade_date: str,
+    tracker: ProgressTracker,
+) -> threading.Thread:
+    """Launch a debug pipeline that uses canned data instead of LLM calls."""
+
+    tracker.ticker = ticker
+    tracker.trade_date = trade_date
+    tracker.is_running = True
+
+    def _target() -> None:
+        try:
+            _run_debug(ticker, trade_date, tracker)
+        except Exception as exc:
+            tracker.mark_error(str(exc))
+
+    t = threading.Thread(target=_target, daemon=True)
+    t.start()
+    return t
+
+
+def _run_debug(ticker: str, trade_date: str, tracker: ProgressTracker) -> None:
+    """Simulate pipeline stages using pre-canned analysis data."""
+    fixture_path = Path(__file__).resolve().parent / "debug_state.json"
+    debug_state = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    # Override with actual user input
+    debug_state["company_of_interest"] = ticker
+    debug_state["trade_date"] = trade_date
+
+    # Simulate each stage completing with realistic delays
+    stages = [
+        ("market", "market_report"),
+        ("social", "sentiment_report"),
+        ("news", "news_report"),
+        ("fundamentals", "fundamentals_report"),
+        ("policy", "policy_report"),
+        ("hot_money", "hot_money_report"),
+        ("lockup", "lockup_report"),
+        ("quality_gate", "data_quality_summary"),
+        ("debate", "investment_plan"),
+        ("trader", "trader_investment_plan"),
+        ("risk", "risk_debate_state"),
+        ("pm", "final_trade_decision"),
+    ]
+
+    print(f"\n{'='*50}")
+    print(f"🐛 DEBUG 模式: {ticker} {trade_date}")
+    print(f"{'='*50}")
+
+    from tradingagents.agents.utils.rating import parse_rating
+
+    for stage_id, _ in stages:
+        if not tracker.is_running:
+            return
+
+        tracker.mark_stage_active(stage_id)
+        time.sleep(0.15)
+
+        if stage_id == "debate":
+            tracker.mark_stage_done(stage_id, debug_state.get("investment_plan", ""))
+
+            # Build a minimal last_chunk for signal extraction
+            last_chunk: dict[str, Any] = {}
+            for k in [
+                "market_report", "sentiment_report", "news_report",
+                "fundamentals_report", "policy_report", "hot_money_report",
+                "lockup_report",
+            ]:
+                if debug_state.get(k):
+                    last_chunk[k] = debug_state[k]
+        elif stage_id == "pm":
+            tracker.mark_stage_done(stage_id, debug_state.get("final_trade_decision", ""))
+        else:
+            report = debug_state.get(stage_id, "") if stage_id in ["quality_gate"] else ""
+            if not report:
+                report = debug_state.get(
+                    {"market": "market_report", "social": "sentiment_report",
+                     "news": "news_report", "fundamentals": "fundamentals_report",
+                     "policy": "policy_report", "hot_money": "hot_money_report",
+                     "lockup": "lockup_report", "trader": "trader_investment_decision",
+                     "risk": "risk_debate_state"}.get(stage_id, ""), ""
+                )
+            tracker.mark_stage_done(stage_id, str(report) if not isinstance(report, dict) else "")
+
+        tracker.update_stats(0, 0, 0, 0)
+
+    signal = parse_rating(debug_state.get("final_trade_decision", ""))
+
+    completed = tracker.completed_stages
+    for stage in PIPELINE_STAGES:
+        sid = stage["id"]
+        if sid in completed:
+            print(f"  ✓ {stage['icon']} {stage['name']}")
+
+    print(f"  信号: {signal}")
+    print(f"  LLM 调用: 0  工具调用: 0")
+    print(f"{'='*50}\n")
+
+    tracker.mark_complete(debug_state, signal)

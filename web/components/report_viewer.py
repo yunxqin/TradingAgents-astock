@@ -75,7 +75,7 @@ def render_report(
 
     st.caption("⚠️ 本报告由 AI 自动生成，仅供学习研究，不构成投资建议。")
 
-    col_pdf, col_spacer = st.columns([1, 3])
+    col_pdf, col_html, col_spacer = st.columns([1, 1, 2])
     with col_pdf:
         # Cache PDF bytes in session_state — WeasyPrint is CPU-heavy (~1-3s),
         # avoid regenerating on every Streamlit rerun.
@@ -89,15 +89,20 @@ def render_report(
             mime="application/pdf",
             use_container_width=True,
         )
+    with col_html:
+        from web.html_export import generate_html
+        html_key = f"html_{ticker}_{trade_date}"
+        if html_key not in st.session_state:
+            st.session_state[html_key] = generate_html(final_state, ticker, trade_date, signal)
+        st.download_button(
+            "🌐 下载 HTML 报告",
+            data=st.session_state[html_key],
+            file_name=f"TradingAgents-Astock_{ticker}_{trade_date}.html",
+            mime="text/html",
+            use_container_width=True,
+        )
 
     st.markdown("---")
-
-    inv_plan = final_state.get("investment_plan", "")
-    if inv_plan:
-        st.markdown("### 👔 最终投资建议")
-        st.markdown(_strip_think(str(inv_plan)))
-        st.markdown("---")
-
     st.markdown("### 📊 分析师报告")
 
     for key, title in _ANALYST_SECTIONS:
