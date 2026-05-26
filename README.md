@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/simonlin1212/tradingagents-astock/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/simonlin1212/tradingagents-astock?style=social"/></a>
-  <a href="https://github.com/simonlin1212/tradingagents-astock/network/members"><img alt="Forks" src="https://img.shields.io/github/forks/simonlin1212/tradingagents-astock?style=social"/></a>
+  <a href="https://github.com/yunxqin/tradingagents-astock/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/yunxqin/tradingagents-astock?style=social"/></a>
+  <a href="https://github.com/yunxqin/tradingagents-astock/network/members"><img alt="Forks" src="https://img.shields.io/github/forks/yunxqin/tradingagents-astock?style=social"/></a>
   <a href="https://arxiv.org/abs/2412.20138"><img alt="论文" src="https://img.shields.io/badge/论文-arXiv_2412.20138-B31B1B?logo=arxiv"/></a>
   <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/License-Apache_2.0-blue"/></a>
   <a href="./CHANGES_FROM_UPSTREAM.md"><img alt="改动记录" src="https://img.shields.io/badge/改动记录-CHANGES-orange"/></a>
@@ -146,7 +146,7 @@
 
 ```bash
 # Python >= 3.10
-git clone https://github.com/simonlin1212/tradingagents-astock.git
+git clone https://github.com/yunxqin/tradingagents-astock.git
 cd tradingagents-astock
 pip install -e .
 
@@ -357,10 +357,10 @@ TradingAgents-Astock/
 </p>
 <p align="center">
   <a href="https://ifdian.net/a/simonlin">爱发电</a> ·
-  <a href="https://buymeacoffee.com/simonlin1212">Buy Me a Coffee</a>
+  <a href="https://buymeacoffee.com/yunxqin">Buy Me a Coffee</a>
 </p>
 
-> 想要什么功能？欢迎开 [Issue](https://github.com/simonlin1212/tradingagents-astock/issues) 提需求，赞助者的 Issue 优先处理。
+> 想要什么功能？欢迎开 [Issue](https://github.com/yunxqin/tradingagents-astock/issues) 提需求，赞助者的 Issue 优先处理。
 
 ---
 

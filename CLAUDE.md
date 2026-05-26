@@ -3,7 +3,7 @@
 ## 项目概述
 基于 [TauricResearch/TradingAgents](https://github.com/TauricResearch/TradingAgents)（65K Stars）的 A 股深度特化 fork。多 Agent 投研框架，7 个 Analyst 角色通过 Bull/Bear 辩论 + 三方风险辩论生成投资报告。
 
-- **仓库**: https://github.com/simonlin1212/TradingAgents-astock
+- **仓库**: https://github.com/yunxqin/TradingAgents-astock
 - **协议**: Apache 2.0
 - **Python**: >=3.10
 - **当前版本**: 0.2.7
@@ -63,5 +63,5 @@ deepseek-v4-flash 等模型在 tool call 时可能返回中文股票名而非 6 
 - Web UI 改动在 `web/` 目录，用 `streamlit run web/launch.py` 本地测试
 
 ## 相关项目
-- [a-stock-data](https://github.com/simonlin1212/a-stock-data) — A 股 MCP 数据服务（Claude Code 用的 skill）
+- [a-stock-data](https://github.com/yunxqin/a-stock-data) — A 股 MCP 数据服务（Claude Code 用的 skill）
 - 上游 [TauricResearch/TradingAgents](https://github.com/TauricResearch/TradingAgents) — 原版框架
