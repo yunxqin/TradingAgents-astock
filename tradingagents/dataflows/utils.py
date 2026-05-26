@@ -32,9 +32,15 @@ def safe_ticker_component(value: str, *, max_len: int = 32) -> str:
 
     if _HAS_CHINESE_RE.search(value):
         from tradingagents.dataflows.a_stock import resolve_ticker
-        resolved = resolve_ticker(value)
-        logger.info("Auto-resolved Chinese ticker %r -> %s", value, resolved)
-        value = resolved
+        resolved = resolve_ticker(value, strict=False)
+        if resolved:
+            logger.info("Auto-resolved Chinese ticker %r -> %s", value, resolved)
+            value = resolved
+        else:
+            raise ValueError(
+                f"Cannot resolve Chinese stock name {value!r} to a ticker code. "
+                f"Please use a 6-digit code or the full stock name."
+            )
 
     if len(value) > max_len:
         raise ValueError(f"ticker exceeds {max_len} chars: {value!r}")

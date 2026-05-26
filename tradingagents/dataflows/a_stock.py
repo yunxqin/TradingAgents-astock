@@ -104,16 +104,18 @@ def _build_name_code_map() -> tuple[dict[str, str], dict[str, str]]:
     return _name_to_code, _code_to_name
 
 
-def resolve_ticker(user_input: str) -> str:
+def resolve_ticker(user_input: str, *, strict: bool = True) -> str:
     """Resolve user input (code or Chinese name) to a 6-digit A-stock code.
 
     Accepts: '600379', 'SH600379', '600379.SH', '宝光股份'
     Returns: '600379'
-    Raises: ValueError if not resolvable.
+    Raises: ValueError if unresolvable (strict mode) or returns "" (non-strict).
     """
     s = user_input.strip()
     if not s:
-        raise ValueError("输入不能为空")
+        if strict:
+            raise ValueError("输入不能为空")
+        return ""
 
     has_chinese = any("一" <= ch <= "鿿" for ch in s)
 
@@ -131,9 +133,16 @@ def resolve_ticker(user_input: str) -> str:
         return next(iter(matches.values()))
     if len(matches) > 1:
         examples = ", ".join(f"{n}({c})" for n, c in list(matches.items())[:5])
-        raise ValueError(f"'{s}' 匹配到多只股票: {examples}，请输入完整名称或代码")
+        msg = f"'{s}' 匹配到多只股票: {examples}，请输入完整名称或代码"
+        if strict:
+            raise ValueError(msg)
+        logger.warning(msg)
+        return ""
 
-    raise ValueError(f"找不到股票 '{s}'，请检查名称是否正确")
+    if strict:
+        raise ValueError(f"找不到股票 '{s}'，请检查名称是否正确")
+    logger.warning("找不到股票 '%s'", s)
+    return ""
 
 
 # ---------------------------------------------------------------------------
